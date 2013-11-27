@@ -18,6 +18,12 @@ const (
 	PUD_UP   = 2
 )
 
+const (
+	MODE_UNKNOWN = -1
+	BOARD        = 10
+	BCM          = 11
+)
+
 type Pins struct {
 	Name       string
 	Key        string
@@ -138,6 +144,15 @@ func PinsByName(name string) (pins Pins, found bool) {
 func PinsByKey(key string) (pins Pins, found bool) {
 	for i := range pinsTable {
 		if pinsTable[i].Key == key {
+			return pinsTable[i], true
+		}
+	}
+	return Pins{}, false
+}
+
+func PinsByNameOrKey(nameOrKey string) (pins Pins, found bool) {
+	for i := range pinsTable {
+		if pinsTable[i].Name == nameOrKey || pinsTable[i].Key == nameOrKey {
 			return pinsTable[i], true
 		}
 	}
