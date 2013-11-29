@@ -10,7 +10,7 @@ var (
 	adcPrefixDir   string
 )
 
-func AdcSetup() error {
+func ADCSetup() error {
 	if adcInitialized {
 		return nil
 	}
@@ -36,7 +36,7 @@ func ReadValue(ain int) (value float32) {
 	return value
 }
 
-func AdcCleanup() error {
+func ADCCleanup() error {
 	adcInitialized = false
 	return UnloadDeviceTree("cape-bone-iio")
 }

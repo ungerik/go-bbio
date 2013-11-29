@@ -18,17 +18,17 @@ var (
 	ctrlDir string
 )
 
-func buildPath(partialPath, prefix string) (path string, found bool) {
+func buildPath(partialPath, prefix string) (string, error) {
 	dirFiles, err := ioutil.ReadDir(partialPath)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 	for _, file := range dirFiles {
 		if file.IsDir() && strings.HasPrefix(file.Name(), prefix) {
-			return file.Name(), true
+			return file.Name(), nil
 		}
 	}
-	return "", false
+	return "", os.ErrNotExist
 }
 
 func LoadDeviceTree(name string) error {
