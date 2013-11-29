@@ -1,11 +1,13 @@
-package bbio
+package pwm
 
 import (
 	"fmt"
 	"os"
+
+	"github.com/ungerik/go-bbio"
 )
 
-type pwmExport struct {
+type export struct {
 	periodFile   *os.File
 	dutyFile     *os.File
 	polarityFile *os.File
@@ -14,31 +16,31 @@ type pwmExport struct {
 }
 
 var (
-	pwmInitialized bool
-	ocpDir         string
-	exportedPWMs   = make(map[string]*pwmExport)
+	initialized bool
+	ocpDir      string
+	exported    = make(map[string]*export)
 )
 
-func initializePWM() error {
-	if pwmInitialized {
+func initialize() error {
+	if initialized {
 		return nil
 	}
 
-	err := LoadDeviceTree("am33xx_pwm")
+	err := bbio.LoadDeviceTree("am33xx_pwm")
 	if err != nil {
 		return err
 	}
 
-	ocpDir, err = buildPath("/sys/devices", "ocp")
+	ocpDir, err = bbio.BuildPath("/sys/devices", "ocp")
 	return err
 }
 
-func PWMSetFrequency(key string, freq float32) error {
+func SetFrequency(key string, freq float32) error {
 	if freq <= 0 {
 		return fmt.Errorf("invalid requency: %f", freq)
 	}
 
-	pwm, ok := exportedPWMs[key]
+	pwm, ok := exported[key]
 	if !ok {
 		return fmt.Errorf("PWM '%s' not found", key)
 	}
@@ -55,8 +57,8 @@ func PWMSetFrequency(key string, freq float32) error {
 	return nil
 }
 
-func PWMSetPolarity(key string, polarity int) error {
-	pwm, ok := exportedPWMs[key]
+func SetPolarity(key string, polarity int) error {
+	pwm, ok := exported[key]
 	if !ok {
 		return fmt.Errorf("PWM '%s' not found", key)
 	}
@@ -65,12 +67,12 @@ func PWMSetPolarity(key string, polarity int) error {
 	return err
 }
 
-func PWMSetDutyCycle(key string, duty float32) error {
+func SetDutyCycle(key string, duty float32) error {
 	if duty < 0 || duty > 100 {
 		return fmt.Errorf("invalid duty cycle: %f", duty)
 	}
 
-	pwm, ok := exportedPWMs[key]
+	pwm, ok := exported[key]
 	if !ok {
 		return fmt.Errorf("PWM '%s' not found", key)
 	}
@@ -81,19 +83,19 @@ func PWMSetDutyCycle(key string, duty float32) error {
 	return err
 }
 
-func PWMStart(key string, duty, freq float32, polarity int) error {
-	err := initializePWM()
+func Start(key string, duty, freq float32, polarity int) error {
+	err := initialize()
 	if err != nil {
 		return err
 	}
 
-	err = LoadDeviceTree("bone_pwm_" + key)
+	err = bbio.LoadDeviceTree("bone_pwm_" + key)
 	if err != nil {
 		return err
 	}
 
 	//finds and builds the pwmTestPath, as it can be variable...
-	pwmTestPath, err := buildPath(ocpDir, "pwm_test_"+key)
+	pwmTestPath, err := bbio.BuildPath(ocpDir, "pwm_test_"+key)
 	if err != nil {
 		return err
 	}
@@ -119,7 +121,7 @@ func PWMStart(key string, duty, freq float32, polarity int) error {
 		return err
 	}
 
-	exportedPWMs[key] = &pwmExport{
+	exported[key] = &export{
 		periodFile:   periodFile,
 		dutyFile:     dutyFile,
 		polarityFile: polarityFile,
@@ -128,18 +130,18 @@ func PWMStart(key string, duty, freq float32, polarity int) error {
 	return nil
 }
 
-func PWMDisable(key string) {
-	UnloadDeviceTree("bone_pwm_" + key)
-	if pwm, ok := exportedPWMs[key]; ok {
+func Disable(key string) {
+	bbio.UnloadDeviceTree("bone_pwm_" + key)
+	if pwm, ok := exported[key]; ok {
 		pwm.periodFile.Close()
 		pwm.dutyFile.Close()
 		pwm.polarityFile.Close()
-		delete(exportedPWMs, key)
+		delete(exported, key)
 	}
 }
 
-func PWMCleanup() {
-	for key := range exportedPWMs {
-		PWMDisable(key)
+func Cleanup() {
+	for key := range exported {
+		Disable(key)
 	}
 }

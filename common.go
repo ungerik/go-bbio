@@ -11,14 +11,11 @@ import (
 	"github.com/ungerik/go-quick"
 )
 
-// var gpio_mode int
-// var gpio_direction [120]int
-// var pwm_pins [120]int
 var (
 	ctrlDir string
 )
 
-func buildPath(partialPath, prefix string) (string, error) {
+func BuildPath(partialPath, prefix string) (string, error) {
 	dirFiles, err := ioutil.ReadDir(partialPath)
 	if err != nil {
 		return "", err
@@ -32,7 +29,7 @@ func buildPath(partialPath, prefix string) (string, error) {
 }
 
 func LoadDeviceTree(name string) error {
-	ctrlDir, _ = buildPath("/sys/devices", "bone_capemgr")
+	ctrlDir, _ = BuildPath("/sys/devices", "bone_capemgr")
 	slots := ctrlDir + "/slots"
 
 	data, err := quick.FileGetString(slots)
