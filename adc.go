@@ -46,18 +46,18 @@ func NewADC(ain int) (*ADC, error) {
 	return &ADC{ain, file}, nil
 }
 
-func (self *ADC) AIn() int {
-	return self.ain
+func (adc *ADC) AIn() int {
+	return adc.ain
 }
 
-func (self *ADC) ReadValue() (value float32) {
-	self.file.Seek(0, os.SEEK_SET)
-	fmt.Fscan(self.file, &value)
+func (adc *ADC) ReadValue() (value float32) {
+	adc.file.Seek(0, os.SEEK_SET)
+	fmt.Fscan(adc.file, &value)
 	return value
 }
 
-func (self *ADC) Close() error {
-	return self.file.Close()
+func (adc *ADC) Close() error {
+	return adc.file.Close()
 }
 
 func CleanupADC() error {
