@@ -24,16 +24,16 @@ const (
 	BCM          = 11
 )
 
-type Pins struct {
+type Pin struct {
 	Name       string
 	Key        string
 	Gpio       int
 	PwmMuxMode int
-	Ain        int
+	AIn        int
 }
 
 //Table generated based on https://raw.github.com/jadonk/bonescript/master/node_modules/bonescript/bone.js
-var pinsTable = []Pins{
+var pinsTable = []Pin{
 	{"USR0", "USR0", 53, -1, -1},
 	{"USR1", "USR1", 54, -1, -1},
 	{"USR2", "USR2", 55, -1, -1},
@@ -132,45 +132,29 @@ var pinsTable = []Pins{
 	{"DGND", "P9_46", 0, -1, -1},
 }
 
-func PinsByName(name string) (pins Pins, found bool) {
+func PinByName(name string) (pins Pin, found bool) {
 	for i := range pinsTable {
 		if pinsTable[i].Name == name {
 			return pinsTable[i], true
 		}
 	}
-	return Pins{}, false
+	return Pin{}, false
 }
 
-func PinsByKey(key string) (pins Pins, found bool) {
+func PinByKey(key string) (pins Pin, found bool) {
 	for i := range pinsTable {
 		if pinsTable[i].Key == key {
 			return pinsTable[i], true
 		}
 	}
-	return Pins{}, false
+	return Pin{}, false
 }
 
-func PinsByNameOrKey(nameOrKey string) (pins Pins, found bool) {
+func PinByNameOrKey(nameOrKey string) (pins Pin, found bool) {
 	for i := range pinsTable {
 		if pinsTable[i].Name == nameOrKey || pinsTable[i].Key == nameOrKey {
 			return pinsTable[i], true
 		}
 	}
-	return Pins{}, false
-}
-
-type Uart struct {
-	Name string
-	Path string
-	Dt   string
-	Rx   string
-	Tx   string
-}
-
-var UartTable = map[string]Uart{
-	"UART1": {"UART1", "/dev/ttyO1", "ADAFRUIT-UART1", "P9_26", "P9_24"},
-	"UART2": {"UART2", "/dev/ttyO2", "ADAFRUIT-UART2", "P9_22", "P9_21"},
-	"UART3": {"UART3", "/dev/ttyO3", "ADAFRUIT-UART3", "P9_42", ""},
-	"UART4": {"UART4", "/dev/ttyO4", "ADAFRUIT-UART4", "P9_11", "P9_13"},
-	"UART5": {"UART5", "/dev/ttyO5", "ADAFRUIT-UART5", "P8_38", "P8_37"},
+	return Pin{}, false
 }

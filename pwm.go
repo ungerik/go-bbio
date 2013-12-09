@@ -19,7 +19,23 @@ var (
 	pwmInitialized bool
 )
 
-func NewPWM(key string, duty, frequency float32, polarity int) (*PWM, error) {
+func NewPWM(nameOrKey string, dutyCycle, frequency float32, polarity int) (*PWM, error) {
+	pin, ok := PinByNameOrKey(nameOrKey)
+	if !ok || pin.PwmMuxMode == -1 {
+		return nil, fmt.Errorf("No PWM with name or key '%s'", nameOrKey)
+	}
+	key := pin.Key
+
+	if dutyCycle < 0 || dutyCycle > 100 {
+		return nil, fmt.Errorf("dutyCycle %f not in range 0.0 to 100.0", dutyCycle)
+	}
+	if frequency <= 0 {
+		return nil, fmt.Errorf("invalid requency: %f", frequency)
+	}
+	if polarity < 0 || polarity > 1 {
+		return nil, fmt.Errorf("polarity must be either 0 or 1")
+	}
+
 	if !pwmInitialized {
 		err := LoadDeviceTree("am33xx_pwm")
 		if err != nil {
@@ -82,7 +98,7 @@ func NewPWM(key string, duty, frequency float32, polarity int) (*PWM, error) {
 		pwm.Close()
 		return nil, err
 	}
-	err = pwm.SetDutyCycle(duty)
+	err = pwm.SetDutyCycle(dutyCycle)
 	if err != nil {
 		pwm.Close()
 		return nil, err
@@ -122,6 +138,9 @@ func (pwm *PWM) Polarity() int {
 }
 
 func (pwm *PWM) SetPolarity(polarity int) error {
+	if polarity < 0 || polarity > 1 {
+		return fmt.Errorf("polarity must be either 0 or 1")
+	}
 	if polarity == pwm.polarity {
 		return nil
 	}
@@ -141,7 +160,7 @@ func (pwm *PWM) DutyCycle() float32 {
 
 func (pwm *PWM) SetDutyCycle(dutyCycle float32) error {
 	if dutyCycle < 0 || dutyCycle > 100 {
-		return fmt.Errorf("invalid duty cycle: %f", dutyCycle)
+		return fmt.Errorf("dutyCycle %f not in range 0.0 to 100.0", dutyCycle)
 	}
 	if dutyCycle == pwm.dutyCycle {
 		return nil

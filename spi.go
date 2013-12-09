@@ -1,5 +1,9 @@
 package bbio
 
+import (
+	"os"
+)
+
 const (
 	SPI_CPHA       = 0x01 /* clock phase */
 	SPI_CPOL       = 0x02 /* clock polarity */
