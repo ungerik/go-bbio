@@ -11,9 +11,7 @@ import (
 	"github.com/ungerik/go-quick"
 )
 
-var (
-	ctrlDir string
-)
+var ctrlDir string
 
 func BuildPath(partialPath, prefix string) (string, error) {
 	dirFiles, err := ioutil.ReadDir(partialPath)
