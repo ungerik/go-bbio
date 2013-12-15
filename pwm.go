@@ -21,7 +21,7 @@ var (
 
 func NewPWM(nameOrKey string, dutyCycle, frequency float32, polarity int) (*PWM, error) {
 	pin, ok := PinByNameOrKey(nameOrKey)
-	if !ok || pin.PwmMuxMode == -1 {
+	if !ok || pin.PWMMuxMode == -1 {
 		return nil, fmt.Errorf("No PWM with name or key '%s'", nameOrKey)
 	}
 	key := pin.Key
