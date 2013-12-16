@@ -10,24 +10,24 @@ var (
 	adcPrefixDir   string
 )
 
-type AIn string
+type AInName string
 
 const (
-	AIN0 AIn = "AIN0"
-	AIN1 AIn = "AIN1"
-	AIN2 AIn = "AIN2"
-	AIN3 AIn = "AIN3"
-	AIN4 AIn = "AIN4"
-	AIN5 AIn = "AIN5"
-	AIN6 AIn = "AIN6"
+	AIN0 AInName = "AIN0"
+	AIN1 AInName = "AIN1"
+	AIN2 AInName = "AIN2"
+	AIN3 AInName = "AIN3"
+	AIN4 AInName = "AIN4"
+	AIN5 AInName = "AIN5"
+	AIN6 AInName = "AIN6"
 )
 
-func AInByPin(pinKey string) (AIn, bool) {
+func AInNameByPin(pinKey string) (AInName, bool) {
 	pin, ok := PinByKey(pinKey)
 	if !ok {
 		return "", false
 	}
-	return AIn(fmt.Sprintf("AIN%d", pin.AIn)), true
+	return AInName(fmt.Sprintf("AIN%d", pin.AInNr)), true
 }
 
 func adcInit() error {
@@ -45,11 +45,11 @@ func adcInit() error {
 }
 
 type ADC struct {
-	ain  AIn
+	ain  AInName
 	file *os.File
 }
 
-func NewADC(ain AIn) (*ADC, error) {
+func NewADC(ain AInName) (*ADC, error) {
 	if !adcInitialized {
 		err := adcInit()
 		if err != nil {
@@ -66,7 +66,7 @@ func NewADC(ain AIn) (*ADC, error) {
 	return &ADC{ain, file}, nil
 }
 
-func (adc *ADC) AIn() AIn {
+func (adc *ADC) AIn() AInName {
 	return adc.ain
 }
 

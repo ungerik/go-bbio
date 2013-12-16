@@ -77,7 +77,7 @@ type Pin struct {
 	Key        string
 	GPIO       int
 	PWMMuxMode int
-	AIn        int
+	AInNr      int
 }
 
 //Table generated based on https://raw.github.com/jadonk/bonescript/master/node_modules/bonescript/bone.js
