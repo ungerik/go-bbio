@@ -7,6 +7,14 @@ import (
 	"github.com/huin/goserial"
 )
 
+const (
+	UART_BAUD_115200 = 115200
+	UART_BAUD_57600  = 57600
+	UART_BAUD_38400  = 38400
+	UART_BAUD_19200  = 19200
+	UART_BAUD_9600   = 9600
+)
+
 type UARTNr int
 
 const (
@@ -14,30 +22,30 @@ const (
 	UART2 UARTNr = 2
 	UART4 UARTNr = 4
 	UART5 UARTNr = 5
+)
 
-	UART_115200_BAUD = 115200
-	UART_57600_BAUD  = 57600
-	UART_38400_BAUD  = 38400
-	UART_19200_BAUD  = 19200
-	UART_9600_BAUD   = 9600
+type UARTParityMode goserial.ParityMode
+
+const (
+	UART_PARITY_NONE = UARTParityMode(goserial.ParityNone)
+	UART_PARITY_EVEN = UARTParityMode(goserial.ParityEven)
+	UART_PARITY_ODD  = UARTParityMode(goserial.ParityOdd)
 )
 
 type UARTByteSize goserial.ByteSize
-type UARTParityMode goserial.ParityMode
+
+const (
+	UART_BYTESIZE_8 = UARTByteSize(goserial.Byte8)
+	UART_BYTESIZE_5 = UARTByteSize(goserial.Byte5)
+	UART_BYTESIZE_6 = UARTByteSize(goserial.Byte6)
+	UART_BYTESIZE_7 = UARTByteSize(goserial.Byte7)
+)
+
 type UARTStopBits goserial.StopBits
 
 const (
-	UART_ParityNone = UARTParityMode(goserial.ParityNone)
-	UART_ParityEven = UARTParityMode(goserial.ParityEven)
-	UART_ParityOdd  = UARTParityMode(goserial.ParityOdd)
-
-	UART_Byte8 = UARTByteSize(goserial.Byte8)
-	UART_Byte5 = UARTByteSize(goserial.Byte5)
-	UART_Byte6 = UARTByteSize(goserial.Byte6)
-	UART_Byte7 = UARTByteSize(goserial.Byte7)
-
-	UART_StopBits1 = UARTStopBits(goserial.StopBits1)
-	UART_StopBits2 = UARTStopBits(goserial.StopBits2)
+	UART_STOPBITS_1 = UARTStopBits(goserial.StopBits1)
+	UART_STOPBITS_2 = UARTStopBits(goserial.StopBits2)
 )
 
 // var uartTable = map[UARTName]uartInfo{
@@ -47,10 +55,10 @@ const (
 // 	UART5: {"UART5", "/dev/ttyO5", "ADAFRUIT-UART5", "P8_38", "P8_37"},
 // }
 
-// Wraps "github.com/huin/goserial"
+// UART wraps "github.com/huin/goserial"
 type UART struct {
-	io.ReadWriteCloser
-	nr UARTNr
+	nr     UARTNr
+	serial io.ReadWriteCloser
 }
 
 func NewUART(nr UARTNr, baud int, size UARTByteSize, parity UARTParityMode, stopBits UARTStopBits) (*UART, error) {
@@ -69,7 +77,7 @@ func NewUART(nr UARTNr, baud int, size UARTByteSize, parity UARTParityMode, stop
 		Parity:   goserial.ParityMode(parity),
 		StopBits: goserial.StopBits(stopBits),
 	}
-	uart.ReadWriteCloser, err = goserial.OpenPort(config)
+	uart.serial, err = goserial.OpenPort(config)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +85,16 @@ func NewUART(nr UARTNr, baud int, size UARTByteSize, parity UARTParityMode, stop
 	return uart, nil
 }
 
+func (uart *UART) Read(p []byte) (n int, err error) {
+	return uart.serial.Read(p)
+}
+
+func (uart *UART) Write(p []byte) (n int, err error) {
+	return uart.serial.Write(p)
+}
+
 func (uart *UART) Close() error {
-	err := uart.ReadWriteCloser.Close()
+	err := uart.serial.Close()
 	if err != nil {
 		return err
 	}

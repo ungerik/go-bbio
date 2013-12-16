@@ -8,6 +8,13 @@ import (
 	"github.com/ungerik/go-quick"
 )
 
+const (
+	HIGH = true
+	LOW  = false
+
+	_EPOLLET = 1 << 31
+)
+
 type GPIOEdge string
 
 const (
@@ -23,13 +30,6 @@ const (
 	GPIO_INPUT  GPIODirection = "in"
 	GPIO_OUTPUT GPIODirection = "out"
 	// GPIO_ALT0   GPIODirection = 4
-)
-
-const (
-	HIGH = true
-	LOW  = false
-
-	_EPOLLET = 1 << 31
 )
 
 // TODO: How is this configured?
