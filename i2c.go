@@ -55,10 +55,10 @@ func (i2c *I2C) SetAddress(address int) error {
 	return nil
 }
 
-func (i2c *I2C) smbusAccess(readWrite, command uint8, size int, data unsafe.Pointer) (uintptr, error) {
+func (i2c *I2C) smbusAccess(readWrite, register uint8, size int, data unsafe.Pointer) (uintptr, error) {
 	args := C.struct_i2c_smbus_ioctl_data{
 		read_write: C.char(readWrite),
-		command:    C.__u8(command),
+		command:    C.__u8(register),
 		size:       C.int(size),
 		data:       (*C.union_i2c_smbus_data)(data),
 	}
@@ -107,125 +107,114 @@ func (i2c *I2C) WriteInt8(value int8) error {
 	return i2c.WriteUint8(uint8(value))
 }
 
-// ReadUint8Cmd reads a single byte from a device, from a designated register.
-// The register is specified through the command byte.
-func (i2c *I2C) ReadUint8Cmd(command uint8) (result uint8, err error) {
-	_, err = i2c.smbusAccess(C.I2C_SMBUS_READ, command, C.I2C_SMBUS_BYTE_DATA, unsafe.Pointer(&result))
+// ReadUint8Reg reads a single byte from a device, from a designated register.
+func (i2c *I2C) ReadUint8Reg(register uint8) (result uint8, err error) {
+	_, err = i2c.smbusAccess(C.I2C_SMBUS_READ, register, C.I2C_SMBUS_BYTE_DATA, unsafe.Pointer(&result))
 	if err != nil {
 		return 0, err
 	}
 	return 0xFF & result, nil
 }
 
-// WriteUint8Cmd writes a single byte to a device, to a designated register. The
-// register is specified through the command byte.
-func (i2c *I2C) WriteUint8Cmd(command uint8, value uint8) error {
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, command, C.I2C_SMBUS_BYTE_DATA, unsafe.Pointer(&value))
+// WriteUint8Reg writes a single byte to a device, to a designated register.
+func (i2c *I2C) WriteUint8Reg(register uint8, value uint8) error {
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, register, C.I2C_SMBUS_BYTE_DATA, unsafe.Pointer(&value))
 	return err
 }
 
-// ReadInt8Cmd reads a single byte from a device, from a designated register.
-// The register is specified through the command byte.
-func (i2c *I2C) ReadInt8Cmd(command uint8) (int8, error) {
-	result, err := i2c.ReadUint8Cmd(command)
+// ReadInt8Reg reads a single byte from a device, from a designated register.
+func (i2c *I2C) ReadInt8Reg(register uint8) (int8, error) {
+	result, err := i2c.ReadUint8Reg(register)
 	return int8(result), err
 }
 
-// WriteInt8Cmd writes a single byte to a device, to a designated register. The
-// register is specified through the command byte.
-func (i2c *I2C) WriteInt8Cmd(command uint8, value int8) error {
-	return i2c.WriteUint8Cmd(command, uint8(value))
+// WriteInt8Reg writes a single byte to a device, to a designated register.
+func (i2c *I2C) WriteInt8Reg(register uint8, value int8) error {
+	return i2c.WriteUint8Reg(register, uint8(value))
 }
 
-// ReadUint16Cmd is very like ReadUint8Cmd; again, data is read from a
-// device, from a designated register that is specified through the command
-// byte. But this time, the data is a complete word (16 bits).
-func (i2c *I2C) ReadUint16Cmd(command uint8) (result uint16, err error) {
-	_, err = i2c.smbusAccess(C.I2C_SMBUS_READ, command, C.I2C_SMBUS_WORD_DATA, unsafe.Pointer(&result))
+// ReadUint16Reg is very like ReadUint8Reg; again, data is read from a
+// device, from a designated register.
+// But this time, the data is a complete word (16 bits).
+func (i2c *I2C) ReadUint16Reg(register uint8) (result uint16, err error) {
+	_, err = i2c.smbusAccess(C.I2C_SMBUS_READ, register, C.I2C_SMBUS_WORD_DATA, unsafe.Pointer(&result))
 	if err != nil {
 		return 0, err
 	}
 	return 0xFFFF & result, nil
 }
 
-// WriteUint16Cmd is the opposite of the ReadUint16Cmd operation. 16 bits
-// of data is written to a device, to the designated register that is
-// specified through the command byte.
-func (i2c *I2C) WriteUint16Cmd(command uint8, value uint16) error {
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, command, C.I2C_SMBUS_WORD_DATA, unsafe.Pointer(&value))
+// WriteUint16Reg is the opposite of the ReadUint16Reg operation. 16 bits
+// of data is written to a device, to the designated register.
+func (i2c *I2C) WriteUint16Reg(register uint8, value uint16) error {
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, register, C.I2C_SMBUS_WORD_DATA, unsafe.Pointer(&value))
 	return err
 }
 
-// ReadUint16CmdSwapped is very like ReadUint8Cmd; again, data is read from a
-// device, from a designated register that is specified through the command
-// byte. But this time, the data is a complete word (16 bits).
+// ReadUint16RegSwapped is very like ReadUint8Reg; again, data is read from a
+// device, from a designated register. But this time, the data is a complete word (16 bits).
 // The bytes of the 16 bit value will be swapped.
-func (i2c *I2C) ReadUint16CmdSwapped(command uint8) (result uint16, err error) {
-	result, err = i2c.ReadUint16Cmd(command)
+func (i2c *I2C) ReadUint16RegSwapped(register uint8) (result uint16, err error) {
+	result, err = i2c.ReadUint16Reg(register)
 	return SwapBytes(result), err
 }
 
-// WriteUint16CmdSwapped is the opposite of the ReadUint16CmdSwapped operation. 16 bits
-// of data is written to a device, to the designated register that is
-// specified through the command byte.
+// WriteUint16RegSwapped is the opposite of the ReadUint16RegSwapped operation. 16 bits
+// of data is written to a device, to the designated register.
 // The bytes of the 16 bit value will be swapped.
-func (i2c *I2C) WriteUint16CmdSwapped(command uint8, value uint16) error {
-	return i2c.WriteUint16Cmd(command, SwapBytes(value))
+func (i2c *I2C) WriteUint16RegSwapped(register uint8, value uint16) error {
+	return i2c.WriteUint16Reg(register, SwapBytes(value))
 }
 
-// ReadInt16Cmd is very like ReadInt8Cmd; again, data is read from a
-// device, from a designated register that is specified through the command
-// byte. But this time, the data is a complete word (16 bits).
-func (i2c *I2C) ReadInt16Cmd(command uint8) (int16, error) {
-	result, err := i2c.ReadUint16Cmd(command)
+// ReadInt16Reg is very like ReadInt8Reg; again, data is read from a
+// device, from a designated register. But this time, the data is a complete word (16 bits).
+func (i2c *I2C) ReadInt16Reg(register uint8) (int16, error) {
+	result, err := i2c.ReadUint16Reg(register)
 	return int16(result), err
 }
 
-// WriteInt16Cmd is the opposite of the ReadInt16Cmd operation. 16 bits
-// of data is written to a device, to the designated register that is
-// specified through the command byte.
-func (i2c *I2C) WriteInt16Cmd(command uint8, value int16) error {
-	return i2c.WriteUint16Cmd(command, uint16(value))
+// WriteInt16Reg is the opposite of the ReadInt16Reg operation. 16 bits
+// of data is written to a device, to the designated register.
+func (i2c *I2C) WriteInt16Reg(register uint8, value int16) error {
+	return i2c.WriteUint16Reg(register, uint16(value))
 }
 
-// ReadInt16CmdSwapped is very like ReadInt8CmdSwapped; again, data is read from a
-// device, from a designated register that is specified through the command
-// byte. But this time, the data is a complete word (16 bits).
+// ReadInt16RegSwapped is very like ReadInt8RegSwapped; again, data is read from a
+// device, from a designated register. But this time, the data is a complete word (16 bits).
 // The bytes of the 16 bit value will be swapped.
-func (i2c *I2C) ReadInt16CmdSwapped(command uint8) (int16, error) {
-	result, err := i2c.ReadUint16CmdSwapped(command)
+func (i2c *I2C) ReadInt16RegSwapped(register uint8) (int16, error) {
+	result, err := i2c.ReadUint16RegSwapped(register)
 	return int16(result), err
 }
 
-// WriteInt16CmdSwapped is the opposite of the ReadInt16CmdSwapped operation. 16 bits
-// of data is written to a device, to the designated register that is
-// specified through the command byte.
+// WriteInt16RegSwapped is the opposite of the ReadInt16RegSwapped operation. 16 bits
+// of data is written to a device, to the designated register.
 // The bytes of the 16 bit value will be swapped.
-func (i2c *I2C) WriteInt16CmdSwapped(command uint8, value int16) error {
-	return i2c.WriteUint16CmdSwapped(command, uint16(value))
+func (i2c *I2C) WriteInt16RegSwapped(register uint8, value int16) error {
+	return i2c.WriteUint16RegSwapped(register, uint16(value))
 }
 
-// ProcessCall selects a device register (through the command byte), sends
+// ProcessCall selects a device register (through the register byte), sends
 // 16 bits of data to it, and reads 16 bits of data in return.
-func (i2c *I2C) ProcessCall(command uint8, value uint16) (uint16, error) {
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, command, C.I2C_SMBUS_PROC_CALL, unsafe.Pointer(&value))
+func (i2c *I2C) ProcessCall(register uint8, value uint16) (uint16, error) {
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, register, C.I2C_SMBUS_PROC_CALL, unsafe.Pointer(&value))
 	if err != nil {
 		return 0, err
 	}
 	return 0xFFFF & value, nil
 }
 
-// ProcessCallSwapped selects a device register (through the command byte), sends
+// ProcessCallSwapped selects a device register (through the register byte), sends
 // 16 bits of data to it, and reads 16 bits of data in return.
 // The bytes of the 16 bit value will be swapped.
-func (i2c *I2C) ProcessCallSwapped(command uint8, value uint16) (uint16, error) {
-	result, err := i2c.ProcessCall(command, SwapBytes(value))
+func (i2c *I2C) ProcessCallSwapped(register uint8, value uint16) (uint16, error) {
+	result, err := i2c.ProcessCall(register, SwapBytes(value))
 	return SwapBytes(result), err
 }
 
 // ProcessCallBlock reads a block of up to 32 bytes from a device, from a
-// designated register that is specified through the command byte.
-func (i2c *I2C) ProcessCallBlock(command uint8, block []byte) ([]byte, error) {
+// designated register.
+func (i2c *I2C) ProcessCallBlock(register uint8, block []byte) ([]byte, error) {
 	length := len(block)
 	if length == 0 || length > C.I2C_SMBUS_BLOCK_MAX {
 		return nil, fmt.Errorf("Length of block is %d, but must be in the range 1 to %d", length, C.I2C_SMBUS_BLOCK_MAX)
@@ -233,27 +222,26 @@ func (i2c *I2C) ProcessCallBlock(command uint8, block []byte) ([]byte, error) {
 	data := make([]byte, length+1, C.I2C_SMBUS_BLOCK_MAX+2)
 	data[0] = byte(length)
 	copy(data[1:], block)
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, command, C.I2C_SMBUS_BLOCK_PROC_CALL, unsafe.Pointer(&data[0]))
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, register, C.I2C_SMBUS_BLOCK_PROC_CALL, unsafe.Pointer(&data[0]))
 	if err != nil {
 		return nil, err
 	}
 	return data[1 : 1+data[0]], nil
 }
 
-// ReadBlock writes up to 32 bytes to a device, to a designated
-// register that is specified through the command byte.
-func (i2c *I2C) ReadBlock(command uint8) ([]byte, error) {
+// ReadBlock writes up to 32 bytes to a device, to a designated register.
+func (i2c *I2C) ReadBlock(register uint8) ([]byte, error) {
 	data := make([]byte, C.I2C_SMBUS_BLOCK_MAX+2)
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_READ, command, C.I2C_SMBUS_BLOCK_DATA, unsafe.Pointer(&data[0]))
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_READ, register, C.I2C_SMBUS_BLOCK_DATA, unsafe.Pointer(&data[0]))
 	if err != nil {
 		return nil, err
 	}
 	return data[1 : 1+data[0]], nil
 }
 
-// WriteBlock selects a device register (through the command byte), sends
+// WriteBlock selects a device register, sends
 // 1 to 31 bytes of data to it, and reads 1 to 31 bytes of data in return.
-func (i2c *I2C) WriteBlock(command uint8, block []byte) error {
+func (i2c *I2C) WriteBlock(register uint8, block []byte) error {
 	length := len(block)
 	if length == 0 || length > C.I2C_SMBUS_BLOCK_MAX {
 		return fmt.Errorf("Length of block is %d, but must be in the range 1 to %d", length, C.I2C_SMBUS_BLOCK_MAX)
@@ -261,7 +249,7 @@ func (i2c *I2C) WriteBlock(command uint8, block []byte) error {
 	data := make([]byte, length+1)
 	data[0] = byte(length)
 	copy(data[1:], block)
-	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, command, C.I2C_SMBUS_BLOCK_DATA, unsafe.Pointer(&data[0]))
+	_, err := i2c.smbusAccess(C.I2C_SMBUS_WRITE, register, C.I2C_SMBUS_BLOCK_DATA, unsafe.Pointer(&data[0]))
 	return err
 }
 
