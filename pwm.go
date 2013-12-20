@@ -8,7 +8,7 @@ import (
 type PWM struct {
 	key          string
 	dutyCycle    float32
-	frequency    float32
+	frequencyGHz float32
 	polarity     int
 	periodFile   *os.File
 	dutyFile     *os.File
@@ -19,22 +19,12 @@ var (
 	pwmInitialized bool
 )
 
-func NewPWM(nameOrKey string, dutyCycle, frequency float32, polarity int) (*PWM, error) {
+func NewPWM(nameOrKey string, dutyCycle, frequencyGHz float32, polarity int) (*PWM, error) {
 	pin, ok := PinByNameOrKey(nameOrKey)
 	if !ok || pin.PWMMuxMode == -1 {
 		return nil, fmt.Errorf("No PWM with name or key '%s'", nameOrKey)
 	}
 	key := pin.Key
-
-	if dutyCycle < 0 || dutyCycle > 100 {
-		return nil, fmt.Errorf("dutyCycle %f not in range 0.0 to 100.0", dutyCycle)
-	}
-	if frequency <= 0 {
-		return nil, fmt.Errorf("invalid requency: %f", frequency)
-	}
-	if polarity < 0 || polarity > 1 {
-		return nil, fmt.Errorf("polarity must be either 0 or 1")
-	}
 
 	if !pwmInitialized {
 		err := LoadDeviceTree("am33xx_pwm")
@@ -88,7 +78,7 @@ func NewPWM(nameOrKey string, dutyCycle, frequency float32, polarity int) (*PWM,
 		polarityFile: polarityFile,
 	}
 
-	err = pwm.SetFrequency(frequency)
+	err = pwm.SetFrequency(frequencyGHz)
 	if err != nil {
 		pwm.Close()
 		return nil, err
@@ -108,28 +98,27 @@ func NewPWM(nameOrKey string, dutyCycle, frequency float32, polarity int) (*PWM,
 }
 
 func (pwm *PWM) Key() string {
-	return pwm.Key()
+	return pwm.key
 }
 
+// Frequency returns the signal frequency in Giga Hertz
 func (pwm *PWM) Frequency() float32 {
-	return pwm.frequency
+	return pwm.frequencyGHz
 }
 
-func (pwm *PWM) SetFrequency(frequency float32) error {
-	if frequency <= 0 {
-		return fmt.Errorf("invalid requency: %f", frequency)
-	}
-	if frequency == pwm.frequency {
-		return nil
+// SetFrequency sets the signal frequency in Giga Hertz
+func (pwm *PWM) SetFrequency(frequencyGHz float32) error {
+	if frequencyGHz <= 0 {
+		return fmt.Errorf("invalid frequency: %f", frequencyGHz)
 	}
 
-	periodNs := uint(1e9 / frequency)
+	periodNs := uint(1e9 / frequencyGHz)
 	_, err := fmt.Fprintf(pwm.periodFile, "%d", periodNs)
 	if err != nil {
 		return err
 	}
 
-	pwm.frequency = frequency
+	pwm.frequencyGHz = frequencyGHz
 	return nil
 }
 
@@ -141,9 +130,6 @@ func (pwm *PWM) SetPolarity(polarity int) error {
 	if polarity < 0 || polarity > 1 {
 		return fmt.Errorf("polarity must be either 0 or 1")
 	}
-	if polarity == pwm.polarity {
-		return nil
-	}
 
 	_, err := fmt.Fprintf(pwm.polarityFile, "%d", polarity)
 	if err != nil {
@@ -154,20 +140,20 @@ func (pwm *PWM) SetPolarity(polarity int) error {
 	return nil
 }
 
+// DutyCycle returns the duty cicly of the signal with range from 0.0 to 1.0.
 func (pwm *PWM) DutyCycle() float32 {
 	return pwm.dutyCycle
 }
 
+// SetDutyCycle sets the duty cicly of the signal.
+// dutyCycle must be in the range from 0.0 to 1.0
 func (pwm *PWM) SetDutyCycle(dutyCycle float32) error {
-	if dutyCycle < 0 || dutyCycle > 100 {
-		return fmt.Errorf("dutyCycle %f not in range 0.0 to 100.0", dutyCycle)
-	}
-	if dutyCycle == pwm.dutyCycle {
-		return nil
+	if dutyCycle < 0 || dutyCycle > 1 {
+		return fmt.Errorf("dutyCycle %f not in range 0.0 to 1.0", dutyCycle)
 	}
 
-	periodNs := uint(1e9 / pwm.frequency)
-	duty := uint(float32(periodNs) * dutyCycle * 0.01)
+	periodNs := 1e9 / pwm.frequencyGHz
+	duty := uint(periodNs * dutyCycle)
 	_, err := fmt.Fprintf(pwm.dutyFile, "%d", duty)
 	if err != nil {
 		return err
