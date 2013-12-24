@@ -20,7 +20,7 @@ func BuildPath(partialPath, prefix string) (string, error) {
 	}
 	for _, file := range dirFiles {
 		if file.IsDir() && strings.HasPrefix(file.Name(), prefix) {
-			return file.Name(), nil
+			return partialPath+"/"+file.Name(), nil
 		}
 	}
 	return "", os.ErrNotExist
